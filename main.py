@@ -81,7 +81,7 @@ async def save_file(client: Client, message: Message):
     await message.reply_text(
         f"✅ ফাইল চ্যানেলে সেভ হয়েছে!\n\n"
         f"📥 ডাউনলোড লিংক:\n"
-        f"https://yourdomain.com/download/{file_id}"
+        f"https://file-download-server-zzqm.onrender.com/download/{file_id}"
     )
 
 # Run Flask + Bot
