@@ -1,7 +1,8 @@
 import os
 import threading
 from datetime import datetime
-from flask import Flask, redirect, abort
+import requests
+from flask import Flask, Response, abort
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from dotenv import load_dotenv
@@ -30,7 +31,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "✅ Telegram MovieBot Running! (MongoDB Integrated)"
+    return "✅ Telegram MovieBot Running! (MongoDB + Streaming)"
 
 @app.route("/download/<file_id>")
 def download(file_id):
@@ -44,11 +45,18 @@ def download(file_id):
             file = msg.document or msg.video or msg.audio
             file_info = app_client.get_file(file.file_id)
             tg_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_info.file_path}"
-    except Exception as e:
-        print(f"লিংক জেনারেশনে ত্রুটি: {e}")
-        return abort(500, "Download link generation failed.")
 
-    return redirect(tg_url)
+            # Streaming via requests
+            r = requests.get(tg_url, stream=True)
+            return Response(
+                r.iter_content(chunk_size=1024*1024),
+                content_type=r.headers.get('Content-Type', 'application/octet-stream'),
+                headers={"Content-Disposition": f"attachment; filename={file_data['name']}"}
+            )
+
+    except Exception as e:
+        print(f"ডাউনলোড লিংক জেনারেশনে ত্রুটি: {e}")
+        return abort(500, "Download link generation failed.")
 
 # Pyrogram Bot
 bot = Client("MovieBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
@@ -71,8 +79,8 @@ async def save_file(client: Client, message: Message):
     )
 
     await message.reply_text(
-        f"✅ ফাইল সেভ হয়েছে চ্যানেলে!\n\n"
-        f"📥 ডাউনলোড লিঙ্ক:\n"
+        f"✅ ফাইল চ্যানেলে সেভ হয়েছে!\n\n"
+        f"📥 ডাউনলোড লিংক:\n"
         f"https://yourdomain.com/download/{file_id}"
     )
 
